@@ -1,0 +1,75 @@
+import java.io.IOException;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.util.Scanner;
+import org.json.JSONObject;
+import java.util.Scanner;
+
+public class CurrencyConverter {
+
+    
+    private static final String API_KEY = "YOUR_API_KEY";
+    private static final String BASE_URL = "https://v6.exchangerate-api.com/v6/" + API_KEY + "/pair/";
+
+    
+    public static double getExchangeRate(String baseCurrency, String targetCurrency) throws IOException {
+        String urlString = BASE_URL + baseCurrency + "/" + targetCurrency;
+        URL url = new URL(urlString);
+        HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+        conn.setRequestMethod("GET");
+        conn.connect();
+
+        
+        int responseCode = conn.getResponseCode();
+        if (responseCode != 200) {
+            throw new RuntimeException("HttpResponseCode: " + responseCode);
+        }
+
+        
+        StringBuilder inline = new StringBuilder();
+        Scanner scanner = new Scanner(url.openStream());
+        while (scanner.hasNext()) {
+            inline.append(scanner.nextLine());
+        }
+        scanner.close();
+
+        
+        JSONObject dataObj = new JSONObject(inline.toString());
+        return dataObj.getDouble("conversion_rate");
+    }
+
+
+    public static double convertCurrency(double amount, double exchangeRate) {
+        return amount * exchangeRate;
+    }
+
+    public static void main(String[] args) {
+        Scanner scanner = new Scanner(System.in);
+
+      
+        System.out.print("Enter base currency (e.g., USD): ");
+        String baseCurrency = scanner.next().toUpperCase();
+
+        System.out.print("Enter target currency (e.g., EUR): ");
+        String targetCurrency = scanner.next().toUpperCase();
+
+        System.out.print("Enter amount to convert: ");
+        double amount = scanner.nextDouble();
+
+        try {
+            
+            double exchangeRate = getExchangeRate(baseCurrency, targetCurrency);
+
+            
+            double convertedAmount = convertCurrency(amount, exchangeRate);
+
+    
+            System.out.printf("%.2f %s is equivalent to %.2f %s\n", amount, baseCurrency, convertedAmount, targetCurrency);
+        } catch (IOException e) {
+            System.out.println("Error fetching the exchange rate. Please try again.");
+            e.printStackTrace();
+        }
+
+        scanner.close();
+    }
+}
